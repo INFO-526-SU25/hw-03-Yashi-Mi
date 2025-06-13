@@ -16,14 +16,49 @@ if (!require(pacman))
 pacman::p_load(tidyverse,
                here,
                tibble,
-               gt)
+               gt,
+               reader)
 ```
 
 ## 1 - Du Bois challenge.
 
 ```{r}
 #| label: label-me-1
+income <- read_csv(here("data","income.csv"))
+glimpse(income)
+```
 
+```{}
+```
+
+```{r}
+income <- income |>
+  pivot_longer(cols = c("Rent","Food", "Clothes", "Tax","Other"),
+               names_to = "category",
+               values_to = "percentage")
+glimpse(income)
+```
+
+```{r}
+income$category <- factor(income$category, levels =c ("Other", "Tax", "Clothes", "Food", "Rent"))
+
+income$Class <- factor(income$Class, levels = c("$1000 AND OVER","$750-1000","$500-750","$400-500","$300-400","$200-300","$100-200"))
+
+ggplot(income, aes(x=percentage, y=Class,fill=category))+
+  geom_col(position = "stack")+
+  scale_fill_manual(values=c( "Other" = "lightgreen",
+  "Tax" = "lightblue",
+  "Clothes" = "pink",
+  "Food" = "purple",
+  "Rent" = "black"))
+
+```
+
+```{r}
+library(dplyr)
+income %>%
+  filter(is.na(Class)) %>%
+  select(Class)
 ```
 
 ## 2 - COVID survey - interpret
