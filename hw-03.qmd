@@ -17,7 +17,9 @@ pacman::p_load(tidyverse,
                here,
                tibble,
                gt,
-               reader)
+               reader,
+               jpeg,
+               grid)
 ```
 
 ## 1 - Du Bois challenge.
@@ -32,7 +34,7 @@ glimpse(income)
 ```
 
 ```{r}
-income <- income |>
+income_long <- income |>
   pivot_longer(cols = c("Rent","Food", "Clothes", "Tax","Other"),
                names_to = "category",
                values_to = "percentage")
@@ -40,25 +42,42 @@ glimpse(income)
 ```
 
 ```{r}
-income$category <- factor(income$category, levels =c ("Other", "Tax", "Clothes", "Food", "Rent"))
-
-income$Class <- factor(income$Class, levels = c("$1000 AND OVER","$750-1000","$500-750","$400-500","$300-400","$200-300","$100-200"))
-
-ggplot(income, aes(x=percentage, y=Class,fill=category))+
-  geom_col(position = "stack")+
-  scale_fill_manual(values=c( "Other" = "lightgreen",
-  "Tax" = "lightblue",
-  "Clothes" = "pink",
-  "Food" = "purple",
-  "Rent" = "black"))
-
+img <- readJPEG(here("images","paper-1074131_1280.jpg"))
 ```
 
 ```{r}
-library(dplyr)
-income %>%
-  filter(is.na(Class)) %>%
-  select(Class)
+income_long$category <- factor(income_long$category, levels =c ("Other", "Tax", "Clothes", "Food", "Rent"))
+
+income_long$Class <- factor(income_long$Class, levels = c("$1000 AND OVER","$750-1000","$500-750","$400-500","$300-400","$200-300","$100-200"))
+
+p<-ggplot(income_long, aes(x=percentage, y=Class,fill=category))+
+  
+  geom_col(position = "stack")+
+  scale_fill_manual(values=c( "Other" = "#F0FFF0",
+  "Tax" = "#B0C4DE",
+  "Clothes" = "#E8A298",
+  "Food" = "#8D6C9F",
+  "Rent" = "black"))+
+  theme_minimal(base_size = 10)+
+  theme (panel.grid.minor = element_blank(),
+         panel.grid.major = element_blank(),
+         legend.position = "top",
+         aspect.ratio = 0.4,
+         axis.title.x = element_blank(),
+         plot.title = element_text(size = 10))+
+geom_text(aes( label = paste0(percentage,"%"),
+    color = case_when(
+    category == "Rent" ~ "white",
+    TRUE ~ "black")),
+  position = position_stack(vjust = 0.5),
+  size = 2.5,) +
+scale_color_identity()+
+labs(fill = NULL,
+     title = "INCOME AND EXPENDITURE OF 150 NEGRO FAMILIES IN ATLANTA,GA.,U.S.A")
+# The following background rendering code was adapted from online sources.
+grid::grid.raster(img, width = unit(1, "npc"), height = unit(1, "npc"))
+print(p, newpage = FALSE)
+
 ```
 
 ## 2 - COVID survey - interpret
