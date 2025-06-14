@@ -87,6 +87,17 @@ print(p, newpage = FALSE)
 
 ```
 
+::: callout-note
+Age and Gender Effects:\
+In general, individuals aged 21–30 showed the highest level of agreement with the statement “Getting the vaccine will make me feel safer at work.” Interestingly, respondents under the age of 20 expressed greater confidence in the safety of the vaccine. Regarding gender, differences between male and female participants were relatively minor. However, individuals identifying as non-binary, third gender, or those who preferred not to disclose their gender exhibited somewhat lower levels of vaccine confidence overall.
+
+Race and Ethnicity Effects:\
+The influence of race on vaccine attitudes was more complex. On average, Asian respondents reported higher levels of confidence in the vaccine, whereas American Indian and Alaska Native respondents showed lower confidence. Native Hawaiian and other Pacific Islander respondents demonstrated strong support for the vaccine, particularly in recommending it to family, friends, and community members. In contrast, White and Black/African American respondents were generally less likely to recommend the vaccine. Regarding ethnicity, differences between Non-Hispanic/Non-Latino and Hispanic/Latino respondents were modest. However, Hispanic/Latino individuals were somewhat more likely to recommend the vaccine to others.
+
+Vaccination History Effects:\
+Having received the COVID-19 or flu vaccine had a significant impact on respondents’ attitudes. Those who had received both vaccines tended to express more trust in the vaccine and a greater willingness to recommend it to others—despite also reporting some concerns about safety and side effects. Notably, individuals who had received the COVID-19 vaccine were more likely to agree with the statement “Getting the vaccine will make me feel safer at work” and reported higher confidence in the scientific vetting process behind the new COVID vaccines.
+:::
+
 ## 3 - COVID survey - reconstruct
 
 ## 4 - COVID survey - re-reconstruct
