@@ -19,7 +19,8 @@ pacman::p_load(tidyverse,
                gt,
                reader,
                jpeg,
-               grid)
+               grid,
+               forcats)
 ```
 
 ## 1 - Du Bois challenge.
@@ -30,7 +31,7 @@ income <- read_csv(here("data","income.csv"))
 glimpse(income)
 ```
 
-```{}
+```         
 ```
 
 ```{r}
@@ -99,6 +100,139 @@ Having received the COVID-19 or flu vaccine had a significant impact on responde
 :::
 
 ## 3 - COVID survey - reconstruct
+
+```{r}
+#| label: label-me-3
+covid_survey <- read_csv(here("data","covid-survey.csv"))
+glimpse(covid_survey)
+```
+
+```{r}
+covid <- read_csv(here("data", "covid-survey.csv"), skip = 1)
+dim(covid)
+
+```
+
+```{r}
+covid_clean <- covid |>
+  filter(! if_all (-response_id, is.na))
+dim(covid_clean)       
+```
+
+```{r}
+covid_relabeled <- covid_clean |>
+  mutate(exp_already_vax = recode(exp_already_vax,
+         `0` = "No", `1` = "Yes"),
+         exp_flu_vax = recode (exp_flu_vax,
+         `0` = "No", `1` = "Yes"), 
+         exp_profession = recode (exp_profession,
+         `0` = "Medical", `1` = "Nursing"),
+         exp_gender = recode (exp_gender,
+         `0` = "Male", `1` = "Female",
+         `3` = "Non-binary third gender", `4` = "Prefer not to say",),
+         exp_race = recode (exp_race,
+         `1` = "American Indian / Alaskan Native", `2` = "Asian",`3` =            "Black / African American",`4` = "Native Hawaiian / Other\nPacific Islander", `5` = "White",),
+         exp_ethnicity = recode (exp_ethnicity,
+         `1` = "Hispanic / Latino", `2` = "Non-Hispanic/Non-Latino"),
+         exp_age_bin = recode (exp_age_bin,
+          `0` = "<20", `20` = "21–25", `25` = "26–30",`30` = ">30"))
+glimpse(covid_relabeled)
+```
+
+```{r}
+# The following pivot_longer code was adapted from homework website
+covid_survey_longer <- covid_relabeled |>
+  pivot_longer(
+    cols = starts_with("exp_"),
+    names_to = "explanatory",
+    values_to = "explanatory_value"
+  ) |>
+  filter(!is.na(explanatory_value)) |>
+  pivot_longer(
+    cols = starts_with("resp_"),
+    names_to = "response",
+    values_to = "response_value"
+  )
+print(covid_survey_longer)
+```
+
+::: callout-note
+For the first pivot_longer, the code organizes all variables whose names start with "exp\_". These variable names are gathered into a new column called "explanatory", and their corresponding values are placed in a column named "explanatory_value".
+
+For the second pivot_longer, the code organizes all variables whose names start with "resp\_". These variable names are gathered into a new column called "response", and their corresponding values are placed in a column named "response_value".
+:::
+
+```{r}
+covid_survey_summary_stats_by_group <- covid_survey_longer |>
+  group_by(explanatory,explanatory_value,response)|>
+  summarise(mean = mean (response_value, na.rm = TRUE),
+            low = quantile(response_value, 0.1, na.rm = TRUE),
+            high = quantile(response_value, 0.9, na.rm = TRUE), 
+            .group = "drop")|>
+  select(-.group)
+print(covid_survey_summary_stats_by_group)
+```
+
+```{r}
+covid_survey_summary_stats_all <- covid_survey_longer |>
+  group_by(response)|>
+  summarise(mean = mean (response_value, na.rm = TRUE),
+            low = quantile(response_value, 0.1, na.rm = TRUE),
+            high = quantile(response_value, 0.9, na.rm = TRUE), 
+            .group = "drop")|>
+   mutate(explanatory = "All",
+    explanatory_value = "All")|>
+    select(-.group)
+print(covid_survey_summary_stats_all)
+```
+
+```{r}
+covid_survey_summary_stats <- bind_rows(
+  covid_survey_summary_stats_all,
+  covid_survey_summary_stats_by_group)
+print(covid_survey_summary_stats)
+```
+
+```{r}
+covid_survey_summary_stats <- covid_survey_summary_stats |>
+  mutate(explanatory = factor(explanatory, levels = c("All","exp_age_bin", "exp_gender","exp_race","exp_ethnicity","exp_profession","exp_already_vax","exp_flu_vax")))
+
+response_labels <- c(resp_safety = "Based on my understanding, I believe the vaccine is safe",
+resp_confidence_science = "I am confident in the scientific vetting process for the new COVID vaccines",
+resp_feel_safe_at_work = "Getting the vaccine will make me feel safer at work",
+resp_will_recommend = "I will recommend the vaccine to family, friends, and community members",
+resp_trust_info = "I trust the information that I have received about the vaccines",
+resp_concern_safety = "I am concerned about the safety and side effects of the vaccine")
+
+explanatory_labels <- c( exp_age_bin = "Age",
+                         exp_gender = "Gender",
+                         exp_race = "Race",
+                         exp_ethnicity = "Ethnicity",
+                         exp_profession = "Profession",
+                         exp_already_vax = "Had COVID vaccine",
+                         exp_flu_vax = "Had flu vaccine this year",
+                         All = "All" )
+
+```
+
+```{r}
+
+ggplot(covid_survey_summary_stats, aes(x = mean, y = explanatory_value))+
+  geom_errorbar(aes(xmin =low, xmax = high), width = 0.2)+
+  geom_point(size = 1)+
+  facet_grid(explanatory ~ response, scales ="free_y", space ="free_y",
+# The following labeller code was adapted from homework website and online sourse
+             labeller = labeller(response = as_labeller(response_labels,              default = label_wrap_gen(15)),
+             explanatory = as_labeller(explanatory_labels, 
+             default = label_wrap_gen(15))))+
+  
+  labs(x = "Mean Likert score", y = NULL,
+    caption = "Error bars range from 10th to 90th percentile")+
+  theme_minimal(base_size = 8)+
+  theme(panel.grid = element_blank(),
+        strip.background = element_rect(fill = "gray90"),
+        strip.text.y.right = element_text(angle = 0))
+```
 
 ## 4 - COVID survey - re-reconstruct
 
