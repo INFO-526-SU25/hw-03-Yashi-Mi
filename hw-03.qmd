@@ -236,4 +236,154 @@ ggplot(covid_survey_summary_stats, aes(x = mean, y = explanatory_value))+
 
 ## 4 - COVID survey - re-reconstruct
 
+```{r}
+covid_survey_summary_stats_by_group_2 <- covid_survey_longer |>
+  group_by(explanatory,explanatory_value,response)|>
+  summarise(mean = mean (response_value, na.rm = TRUE),
+            low = quantile(response_value, 0.25, na.rm = TRUE),
+            high = quantile(response_value, 0.75, na.rm = TRUE), 
+            .group = "drop")|>
+  select(-.group)
+print(covid_survey_summary_stats_by_group)
+```
+
+```{r}
+covid_survey_summary_stats_all_2 <- covid_survey_longer |>
+  group_by(response)|>
+  summarise(mean = mean (response_value, na.rm = TRUE),
+            low = quantile(response_value, 0.25, na.rm = TRUE),
+            high = quantile(response_value, 0.75, na.rm = TRUE), 
+            .group = "drop")|>
+   mutate(explanatory = "All",
+    explanatory_value = "All")|>
+    select(-.group)
+print(covid_survey_summary_stats_all)
+```
+
+```{r}
+covid_survey_summary_stats_2 <- bind_rows(
+  covid_survey_summary_stats_all_2,
+  covid_survey_summary_stats_by_group_2)
+print(covid_survey_summary_stats)
+```
+
+```{r}
+covid_survey_summary_stats_2 <- covid_survey_summary_stats_2 |>
+  mutate(explanatory = factor(explanatory, levels = c("All","exp_age_bin", "exp_gender","exp_race","exp_ethnicity","exp_profession","exp_already_vax","exp_flu_vax")))
+
+response_labels <- c(resp_safety = "Based on my understanding, I believe the vaccine is safe",
+resp_confidence_science = "I am confident in the scientific vetting process for the new COVID vaccines",
+resp_feel_safe_at_work = "Getting the vaccine will make me feel safer at work",
+resp_will_recommend = "I will recommend the vaccine to family, friends, and community members",
+resp_trust_info = "I trust the information that I have received about the vaccines",
+resp_concern_safety = "I am concerned about the safety and side effects of the vaccine")
+
+explanatory_labels <- c( exp_age_bin = "Age",
+                         exp_gender = "Gender",
+                         exp_race = "Race",
+                         exp_ethnicity = "Ethnicity",
+                         exp_profession = "Profession",
+                         exp_already_vax = "Had COVID vaccine",
+                         exp_flu_vax = "Had flu vaccine this year",
+                         All = "All" )
+
+```
+
+```{r}
+
+ggplot(covid_survey_summary_stats_2, aes(x = mean, y = explanatory_value))+
+  geom_errorbar(aes(xmin =low, xmax = high), width = 0.2)+
+  geom_point(size = 1)+
+  facet_grid(explanatory ~ response, scales ="free_y", space ="free_y",
+# The following labeller code was adapted from homework website and online sourse
+             labeller = labeller(response = as_labeller(response_labels,              default = label_wrap_gen(15)),
+             explanatory = as_labeller(explanatory_labels, 
+             default = label_wrap_gen(15))))+
+  
+  labs(x = "Mean Likert score", y = NULL,
+    caption = "Error bars range from 25th to 75th percentile")+
+  theme_minimal(base_size = 8)+
+  theme(panel.grid = element_blank(),
+        strip.background = element_rect(fill = "gray90"),
+        strip.text.y.right = element_text(angle = 0))
+```
+
+::: callout-note
+This plot has smaller error bars compared to the plot in Exercise 2. It helps reduce overlapping distributions between different groups, making the overall patterns clearer and visually less noisy. However, it does not change my conclusions about the data. This is because our comparisons primarily focus on the mean values rather than the full distribution. While this plot may omit some information about extreme values, it does not significantly alter the results. In fact, it may increase our confidence in the conclusions by emphasizing the central tendency more clearly.
+:::
+
 ## 5 - COVID survey - another view
+
+```{r}
+covid_long <- covid_relabeled |>
+  pivot_longer(
+    cols = starts_with("resp_"),
+    names_to = "response",
+    values_to = "response_value")|>
+filter(!is.na(response_value))
+print(covid_long)
+```
+
+```{r}
+diverging <- covid_long |> 
+  count(response, response_value)|>
+  group_by (response)|>
+  mutate(percentage = n/sum(n))|>
+  ungroup()
+print(diverging)
+```
+
+```{r}
+diverging <- diverging |>
+  mutate(
+    direction = case_when(
+      response_value %in% c("1", "2") ~ "negative",
+      response_value == "3" ~ "neutral",
+      response_value %in% c("4", "5") ~ "positive"),
+    percentage_value = case_when(
+      direction == "negative" ~ -percentage,
+      TRUE ~ percentage))
+print(diverging)
+```
+
+```{r}
+ggplot(diverging, aes(x = percentage_value, y=response, fill=response_value))+
+    geom_bar(stat = "identity")+
+    labs(title = "Diverging Bar Chart for COVID survey",
+         y = "Response")+
+    theme_minimal()+
+  theme(panel.grid = element_blank())
+```
+
+```{r}
+covid_long <- covid_long |>
+mutate(response_value = factor(response_value, levels = 1:5,labels = as.character(1:5)),
+  response = recode(response, resp_safety = "Based on my understanding,\nI believe the vaccine is safe",
+resp_confidence_science = "I am confident in the scientific vetting\nprocess for the new COVID vaccines",
+resp_feel_safe_at_work = "Getting the vaccine will\nmake me feel safer at work",
+resp_will_recommend = "I will recommend the vaccine to family,\nfriends, and community members",
+resp_trust_info = "I trust the information that I have\nreceived about the vaccines",
+resp_concern_safety = "I am concerned about the safety\nand side effects of the vaccine"))
+
+
+```
+
+/
+
+```{r}
+ggplot(covid_long,aes(y=response, fill = response_value))+
+ geom_bar(position = position_fill()) + 
+  labs(
+    title = "100% Bar Chart for COVID survey",
+    x = "percentage",
+    fill = "Response") +
+    scale_fill_manual(values=c( "1" = "#F0FFF0",
+  "2" = "#B0C4DE",
+  "3" = "#E8A298",
+  "4" = "#8D6C9F",
+  "5" = "black"))+
+  theme_minimal()+
+  theme(panel.grid = element_blank())
+  
+  
+```
