@@ -342,18 +342,23 @@ diverging <- diverging |>
       response_value %in% c("4", "5") ~ "positive"),
     percentage_value = case_when(
       direction == "negative" ~ -percentage,
-      TRUE ~ percentage))
+      TRUE ~ percentage),
+     response_value = factor(response_value, levels = c("1", "2", "3", "4", "5")))
 print(diverging)
 ```
 
 ```{r}
-ggplot(diverging, aes(x = percentage_value, y=response, fill=response_value))+
+ggplot(diverging, aes(x = percentage_value, y=response, fill=fct_rev(response_value)))+
     geom_bar(stat = "identity")+
     labs(title = "Diverging Bar Chart for COVID survey",
          y = "Response")+
     theme_minimal()+
   theme(panel.grid = element_blank())
 ```
+
+::: callout-note
+The diverging bar chart displays responses to COVID-19 vaccine survey questions, with questions listed on the Y-axis. Responses of "Strongly Disagree" (value 1) and "Disagree" (value 2) extend to the left, while "Agree" (value 4) and "Strongly Agree" (value 5) extend to the right. The neutral response (value 3) is centered at zero. This layout helps highlight the direction and magnitude of agreement or disagreement across each question, making it easy to compare results polarity.
+:::
 
 ```{r}
 covid_long <- covid_long |>
@@ -387,3 +392,11 @@ ggplot(covid_long,aes(y=response, fill = response_value))+
   
   
 ```
+
+::: callout-note
+The 100% stacked bar chart also shows responses to the COVID-19 vaccine survey, with questions on the Y-axis. Each bar represents a question and is divided into segments showing the percentage of respondents selecting each response value from 1 to 5. All bars are normalized to 100%, allowing for easy comparison of response distributions across different questions.
+:::
+
+::: callout-note
+Together, the two charts provide complementary views of the survey results. The diverging bar chart emphasizes the contrast between positive and negative sentiments, helping to assess overall opinion trends. In contrast, the 100% stacked bar chart focuses on the detailed distribution of all response types for each question, making it ideal for identifying variability or consistency in responses.
+:::
